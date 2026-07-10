@@ -22,7 +22,7 @@ export default function Splash() {
         source={require('../../assets/tico.png')}
         style={{ width: 250, height: 250, resizeMode: 'contain' }}
       />
-      <Text className="mt-[14px] font-baloo-x text-[66px] leading-[66px] text-white">Tico</Text>
+      <Text className="mt-[14px] font-baloo-x text-[66px] leading-[80px] text-white">Tico</Text>
       <Text className="mt-[10px] font-nunito-semi text-[18px] text-white/90">
         suas calorias, sem esforço
       </Text>

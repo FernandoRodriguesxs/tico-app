@@ -21,9 +21,7 @@ function StepButton({ label, onPress }: { label: string; onPress: () => void }) 
         elevation: 3,
       }}
     >
-      <Text className="font-baloo text-[38px] leading-[42px] text-brand" style={{ marginTop: -4 }}>
-        {label}
-      </Text>
+      <Text className="font-baloo text-[38px] leading-[48px] text-brand">{label}</Text>
     </Pressable>
   );
 }
@@ -34,7 +32,7 @@ export function GoalStepper({ goal, onDec, onInc }: Props) {
     <View className="flex-row items-center gap-6">
       <StepButton label="−" onPress={onDec} />
       <View className="min-w-[168px] items-center">
-        <Text className="font-baloo-x text-[74px] leading-[74px] text-brand">{fmt(goal)}</Text>
+        <Text className="font-baloo-x text-[74px] leading-[92px] text-brand">{fmt(goal)}</Text>
         <Text className="mt-[6px] font-nunito-bold text-[16px] text-muted">kcal por dia</Text>
       </View>
       <StepButton label="+" onPress={onInc} />

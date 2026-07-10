@@ -34,7 +34,7 @@ export function ProgressRing({ consumed, goal }: Props) {
         />
       </Svg>
       <View className="absolute inset-0 items-center justify-center">
-        <Text className="font-baloo-x text-[52px] leading-[52px] text-ink">{fmt(consumed)}</Text>
+        <Text className="font-baloo-x text-[52px] leading-[64px] text-ink">{fmt(consumed)}</Text>
         <Text className="mt-1 font-nunito-bold text-[15px] text-muted">de {fmt(goal)} kcal</Text>
       </View>
     </View>

@@ -1,5 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-// Tokens de design do Tico.dc.html (Claude Design). Cores em hex exato do design.
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
@@ -17,6 +16,9 @@ module.exports = {
         success: '#5FA45A',
         card: '#FFF0DF',
         line: '#FCD9C2',
+        sheet: '#FFF9EC',
+        handle: '#E7D9BE',
+        field: '#F0E4CB',
       },
       fontFamily: {
         baloo: ['Baloo2_700Bold'],

@@ -1,13 +1,13 @@
-// Estimador de calorias SIMULADO — portado do Tico.dc.html (Claude Design).
-// No MVP roda 100% local; depois será substituído por uma chamada ao backend/LLM.
-
 export type Meal = {
-  text: string; // o que o usuário digitou
-  food: string; // rótulo do alimento (capitalizado)
+  id: number;
+  text: string;
+  food: string;
   kcal: number;
-  reply: string; // resposta leve do Tico
+  reply: string;
   emoji: string;
 };
+
+export type NewMeal = Omit<Meal, 'id'>;
 
 const REPLIES = ['Anotei! 🥑', 'Boa! 🌰', 'Registrado! ✨', 'Tá anotado! 🐿️', 'Show, comi junto 🥗', 'Feito! 🍊'];
 
@@ -26,8 +26,6 @@ const FOODS: Record<string, number> = {
 
 const EMOJIS = ['🥗', '🍳', '🍛', '🥑', '🍎', '🌰', '🥪', '🍊', '🥐', '🍲'];
 
-// Estima kcal a partir do texto livre. Reconhece quantidade antes do alimento
-// ("2 ovos" = 2×). Sem match, assume 250 kcal (uma refeição média).
 export function estimate(text: string): number {
   const words = text.toLowerCase().replace(/[,.!?;]/g, ' ').split(/\s+/).filter(Boolean);
   let total = 0;
@@ -48,8 +46,7 @@ export function estimate(text: string): number {
 
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-// Monta uma refeição completa a partir do texto do usuário.
-export function buildMeal(raw: string): Meal {
+export function buildMeal(raw: string): NewMeal {
   const text = raw.trim();
   const kcal = estimate(text);
   const food = text.charAt(0).toUpperCase() + text.slice(1);

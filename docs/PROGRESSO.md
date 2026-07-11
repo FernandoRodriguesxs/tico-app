@@ -16,7 +16,9 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 ### O que já funciona
 - **Splash** (01): fundo laranja, mascote, "Tico", bolinhas animadas; decide a rota inicial (tem meta salva → Hoje; senão → Onboarding).
 - **Onboarding** (02): define a meta diária no stepper `− / +`, salva e vai pra Hoje.
-- **Hoje** (03): anel de progresso, pílula de status "sem culpa", feed conversacional (balões + cards de refeição) e input. Registrar refeição soma no anel; passar da meta deixa tudo vermelho.
+- **Hoje** (03): anel de progresso, pílula de status "sem culpa", feed conversacional (balões + cards de refeição) e input. Registrar refeição soma no anel; passar da meta deixa tudo vermelho. O teclado fecha ao enviar.
+- **Editar meta** (Hoje): tocar no anel abre um modal com stepper; salva e persiste.
+- **Editar/excluir refeição** (Hoje, tela 04 do design): tocar num card abre um bottom sheet pra ajustar nome/kcal ou excluir.
 
 ### O que ainda é "de mentira" (proposital pro MVP)
 - **Estimador de calorias**: roda por um dicionário local em `app/src/lib/estimator.ts` (portado do design). Limitado — só reconhece comidas comuns. **Será trocado por chamada real ao LLM via backend.**
@@ -31,7 +33,7 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - **Fontes**: Baloo 2 (títulos/números) e Nunito (corpo), via `@expo-google-fonts`, carregadas em `app/src/app/_layout.tsx`.
 - **Reanimated 4.1** (bolinhas da splash) — babel usa `react-native-worklets/plugin`.
 - **react-native-svg** (anel de progresso).
-- Regras do projeto: ver `CLAUDE.md` na raiz (didático, passos incrementais, commits por bloco responsável, tom "sem culpa", backend sem DDD).
+- Regras do projeto: ver `CLAUDE.md` na raiz (didático, passos incrementais, commits por bloco responsável, tom "sem culpa", backend sem DDD, **sem comentários no código**).
 
 ### Gotcha conhecido (Baloo 2)
 No RN, `lineHeight == fontSize` corta o topo dos glifos altos da Baloo. Nos números/títulos grandes, usar `lineHeight` folgado (~1.2×).
@@ -48,7 +50,8 @@ tico/
     src/
       app/         rotas: _layout, index (splash), onboarding, hoje
       components/  loading-dots, speech-bubble, goal-stepper, primary-button,
-                   progress-ring, status-pill, chat-bubble, meal-card, chat-input
+                   progress-ring, status-pill, chat-bubble, meal-card, chat-input,
+                   goal-editor-modal, meal-editor-modal
       lib/         theme (tokens+fontes), storage (meta), estimator (simulado)
     assets/tico.png  mascote real (PNG transparente)
   api/             (ainda não existe) backend NestJS — próxima fase
@@ -70,11 +73,12 @@ Verificações rápidas: `npx tsc --noEmit` e `npx expo export --platform web`.
 
 ## Próximas fases / backlog (em ordem sugerida)
 
-- [ ] **1. Persistir refeições do dia** (AsyncStorage) — rápido; tira o "some ao recarregar".
-- [ ] **2. Editar / excluir refeição** (PRD 6.4) — tocar no card pra corrigir a estimativa ou apagar.
-- [ ] **3. Backend real** (`api/` NestJS + Prisma + PostgreSQL) + endpoint que chama o LLM e devolve JSON estruturado → substitui o estimador simulado. **Bloco grande: pedir plano antes** (regra do CLAUDE.md). Ver PRD seções 8 e 9.
-- [ ] **4. Autenticação** (e-mail/senha + JWT) — PRD 6.6. Vem junto/depois do backend.
-- [ ] **5. Ajustes visuais** notados rodando no celular (espaçamentos, tamanhos, teclado cobrindo input, etc.).
+- [x] ~~Editar / excluir refeição~~ (PRD 6.4) — **feito**: bottom sheet ao tocar no card.
+- [x] ~~Editar a meta diária~~ — **feito**: modal ao tocar no anel.
+- [ ] **1. Persistir refeições do dia** (AsyncStorage) — rápido; tira o "some ao recarregar". (a meta já persiste)
+- [ ] **2. Backend real** (`api/` NestJS + Prisma + PostgreSQL) + endpoint que chama o LLM e devolve JSON estruturado → substitui o estimador simulado. **Bloco grande: pedir plano antes** (regra do CLAUDE.md). Ver PRD seções 8 e 9.
+- [ ] **3. Autenticação** (e-mail/senha + JWT) — PRD 6.6. Vem junto/depois do backend.
+- [ ] **4. Ajustes visuais** notados rodando no celular (espaçamentos, tamanhos, etc.).
 
 ### Futuro (PRD, não prioritário agora)
 Macros, código de barras (Open Food Facts), tabela TACO, histórico de dias, insights "sem culpa", registro por foto, sincronização multi-aparelho.

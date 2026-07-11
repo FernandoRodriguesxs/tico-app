@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "nest build",
+    "start": "dotenv -e ../.env -- nest start",
+    "start:dev": "dotenv -e ../.env -- nest start --watch",
     "generate": "dotenv -e ../.env -- prisma generate",
     "migrate": "dotenv -e ../.env -- prisma migrate dev",
     "studio": "dotenv -e ../.env -- prisma studio",
@@ -16,11 +19,26 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/swagger": "^11.4.5",
+    "@prisma/client": "^6.19.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@nestjs/cli": "^11.0.24",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.1",
     "dotenv-cli": "^11.0.0",
     "prisma": "^6.19.3",
-    "tsx": "^4.23.0"
+    "source-map-support": "^0.5.21",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3"
   }
 }

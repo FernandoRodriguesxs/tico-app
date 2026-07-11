@@ -25,6 +25,7 @@ em vez de só despejar código. Prefiro passos pequenos e incrementais e seja se
 - Tamanho de Componentes Max 200 linhas por componente (sem contar comentarios e linhas em branco)
 Se passar de 200, extrair em subcomponentes ou hooks
 - NUNCA usar console.log em producao
+- Não usar comentários no código — o código deve ser autoexplicativo (nomes claros de variáveis/funções). Exceção: diretivas funcionais que o compilador/editor exige (ex.: `/// <reference ... />`, `@type` de config).
 - TypeScript sempre; não adicione `any`.
 - Backend SEM DDD por enquanto: só `controller -> service -> prisma`.
   Mantenha simples; não crie camadas ou abstrações que o PRD não pediu.

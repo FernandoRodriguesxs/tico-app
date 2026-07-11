@@ -63,3 +63,4 @@ Se passar de 200, extrair em subcomponentes ou hooks
 - Faça uma coisa de cada vez e me deixe testar antes de seguir.
 - Nunca use gambiarras no desenvolvimento, sempre seguindo padrões corretos.
 - Se algo tiver mais de um caminho, me pergunte antes de escolher.
+- **Nunca commite nem dê push sem minha aprovação.** Sempre me avise o que vai commitar e espere meu OK antes de rodar `git commit`/`git push`.

@@ -1,0 +1,26 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "generate": "dotenv -e ../.env -- prisma generate",
+    "migrate": "dotenv -e ../.env -- prisma migrate dev",
+    "studio": "dotenv -e ../.env -- prisma studio",
+    "seed": "dotenv -e ../.env -- tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "dotenv -e ../.env -- tsx prisma/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.0"
+  }
+}

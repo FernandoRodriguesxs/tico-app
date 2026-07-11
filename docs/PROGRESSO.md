@@ -1,7 +1,7 @@
 # Progresso do Tico — estado e próximos passos
 
 > Doc de continuidade: leia isto no início de cada sessão pra ter o contexto de onde paramos.
-> **Última atualização:** 10/07/2026
+> **Última atualização:** 11/07/2026
 
 ---
 
@@ -20,6 +20,12 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - **Editar meta** (Hoje): tocar no anel abre um modal com stepper; salva e persiste.
 - **Editar/excluir refeição** (Hoje, tela 04 do design): tocar num card abre um bottom sheet pra ajustar nome/kcal ou excluir.
 
+### Backend v0 — fundação de dados (CONCLUÍDA)
+- **PostgreSQL no Neon** (nuvem, região São Paulo), conectado no DBeaver.
+- **`api/` com Prisma 6** ligado ao Neon. **Tabelas `User` e `Meal` criadas** (1ª migration `init`).
+- **Usuário de teste** semeado: `test-user` (`teste@tico.app`, meta 2000) — dono das refeições até existir login.
+- Ainda **sem NestJS**, **sem endpoints**, **sem login** e **sem LLM** (próximos blocos). O app ainda NÃO fala com o backend.
+
 ### O que ainda é "de mentira" (proposital pro MVP)
 - **Estimador de calorias**: roda por um dicionário local em `app/src/lib/estimator.ts` (portado do design). Limitado — só reconhece comidas comuns. **Será trocado por chamada real ao LLM via backend.**
 - **Refeições não persistem**: ao recarregar o app, as refeições do dia somem. Só a **meta** persiste (AsyncStorage). Falta persistir as refeições.
@@ -34,6 +40,8 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - **Reanimated 4.1** (bolinhas da splash) — babel usa `react-native-worklets/plugin`.
 - **react-native-svg** (anel de progresso).
 - Regras do projeto: ver `CLAUDE.md` na raiz (didático, passos incrementais, commits por bloco responsável, tom "sem culpa", backend sem DDD, **sem comentários no código**).
+- **Backend: Prisma 6** (fixado — o Prisma 7 muda a mecânica com `prisma.config.ts` + driver adapter; ficamos no 6 por ser mais simples e documentado). Banco no **Neon** (Postgres).
+- **`.env` único na raiz** (`tico/.env`, gitignored) com `DATABASE_URL` (conexão **direta** do Neon, sem `-pooler`). Os scripts do Prisma em `api/` carregam ele via `dotenv-cli` (`dotenv -e ../.env -- ...`).
 
 ### Gotcha conhecido (Baloo 2)
 No RN, `lineHeight == fontSize` corta o topo dos glifos altos da Baloo. Nos números/títulos grandes, usar `lineHeight` folgado (~1.2×).
@@ -54,7 +62,13 @@ tico/
                    goal-editor-modal, meal-editor-modal
       lib/         theme (tokens+fontes), storage (meta), estimator (simulado)
     assets/tico.png  mascote real (PNG transparente)
-  api/             (ainda não existe) backend NestJS — próxima fase
+  .env             DATABASE_URL do Neon (gitignored — o único .env)
+  api/             backend (Prisma; NestJS ainda não)
+    prisma/
+      schema.prisma  models User + Meal
+      migrations/    init (cria as tabelas)
+      seed.ts        usuário de teste
+    package.json     scripts: generate/migrate/studio/seed (via dotenv-cli)
 ```
 
 ---
@@ -69,6 +83,15 @@ Escanear o QR com a Câmera do iPhone (Expo Go instalado, mesma Wi-Fi). Se a Wi-
 
 Verificações rápidas: `npx tsc --noEmit` e `npx expo export --platform web`.
 
+### Backend (Prisma / banco)
+```powershell
+cd api
+npm run studio     # abre o Prisma Studio no navegador (ver/editar dados)
+npm run migrate    # aplica mudancas de schema (pede --name na 1a vez)
+npm run seed       # recria o usuario de teste
+```
+Precisa do `tico/.env` presente (não vai no git). No DBeaver, dar Refresh na conexão `neondb` pra ver as tabelas.
+
 ---
 
 ## Próximas fases / backlog (em ordem sugerida)
@@ -76,9 +99,12 @@ Verificações rápidas: `npx tsc --noEmit` e `npx expo export --platform web`.
 - [x] ~~Editar / excluir refeição~~ (PRD 6.4) — **feito**: bottom sheet ao tocar no card.
 - [x] ~~Editar a meta diária~~ — **feito**: modal ao tocar no anel.
 - [ ] **1. Persistir refeições do dia** (AsyncStorage) — rápido; tira o "some ao recarregar". (a meta já persiste)
-- [ ] **2. Backend real** (`api/` NestJS + Prisma + PostgreSQL) + endpoint que chama o LLM e devolve JSON estruturado → substitui o estimador simulado. **Bloco grande: pedir plano antes** (regra do CLAUDE.md). Ver PRD seções 8 e 9.
-- [ ] **3. Autenticação** (e-mail/senha + JWT) — PRD 6.6. Vem junto/depois do backend.
-- [ ] **4. Ajustes visuais** notados rodando no celular (espaçamentos, tamanhos, etc.).
+- [x] ~~Banco + tabelas (Prisma + Neon)~~ — **feito**: `User` + `Meal` criadas, usuário de teste semeado.
+- [ ] **2. NestJS** (`api/` com `controller → service → prisma`) + endpoints REST de refeições/meta usando o `test-user`. **Pedir plano antes.**
+- [ ] **3. Ligar o app ao backend**: trocar o estimador/estado local por chamadas à API (camada de serviço em `app/src/lib`). Resolve também o "refeições somem ao recarregar".
+- [ ] **4. LLM real** no backend (endpoint que recebe texto → JSON estruturado). PRD §8/§9.
+- [ ] **5. Autenticação** (e-mail/senha + JWT + tela de login) — PRD 6.6. Troca o `test-user` fixo pelo id do JWT.
+- [ ] **6. Ajustes visuais** notados rodando no celular.
 
 ### Futuro (PRD, não prioritário agora)
 Macros, código de barras (Open Food Facts), tabela TACO, histórico de dias, insights "sem culpa", registro por foto, sincronização multi-aparelho.

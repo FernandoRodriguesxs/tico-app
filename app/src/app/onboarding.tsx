@@ -12,7 +12,6 @@ const STEP = 50;
 const MIN = 800;
 const MAX = 5000;
 
-// Tela 02 — Onboarding. Define a meta diária de calorias e salva.
 export default function Onboarding() {
   const [goal, setGoalState] = useState(2000);
 

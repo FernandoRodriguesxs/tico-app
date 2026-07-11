@@ -5,7 +5,6 @@ type Props = {
   from: 'user' | 'bot';
 };
 
-// Balão de conversa: usuário à direita (laranja), Tico à esquerda (branco).
 export function ChatBubble({ text, from }: Props) {
   if (from === 'user') {
     return (

@@ -3,7 +3,6 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { COLORS, fmt } from '@/lib/theme';
 
-// Circunferência do anel (2·π·r com r=85), igual ao design.
 const CIRCUMFERENCE = 534.07;
 
 type Props = {
@@ -11,7 +10,6 @@ type Props = {
   goal: number;
 };
 
-// Anel de progresso: consumido vs. meta. Fica vermelho ao passar da meta.
 export function ProgressRing({ consumed, goal }: Props) {
   const over = consumed > goal;
   const pct = goal > 0 ? Math.min(consumed / goal, 1) : 0;

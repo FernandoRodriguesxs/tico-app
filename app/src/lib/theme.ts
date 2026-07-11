@@ -1,5 +1,3 @@
-// Tokens de cor do design (Tico.dc.html). Use aqui quando a classe NativeWind
-// não alcança — principalmente props de SVG (stroke/fill) e cores dinâmicas.
 export const COLORS = {
   brand: '#FC6C26',
   brandHover: '#e15d1c',
@@ -17,7 +15,6 @@ export const COLORS = {
   white: '#FFFFFF',
 } as const;
 
-// Nomes exatos das fontes carregadas em _layout.tsx (usados em fontFamily).
 export const FONTS = {
   baloo: 'Baloo2_700Bold',
   balooX: 'Baloo2_800ExtraBold',
@@ -28,6 +25,5 @@ export const FONTS = {
   nunitoX: 'Nunito_800ExtraBold',
 } as const;
 
-// Formata número no padrão pt-BR (ex: 1234 -> "1.234").
 export const fmt = (n: number): string =>
   Math.round(n).toLocaleString('pt-BR');

@@ -10,7 +10,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-// Uma bolinha que sobe e desce em loop (efeito "digitando" da splash).
 function Dot({ delay }: { delay: number }) {
   const t = useSharedValue(0);
 

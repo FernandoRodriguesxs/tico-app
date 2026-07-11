@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-// Balão de fala do Tico, com o "biquinho" triangular no topo.
 export function SpeechBubble({ children }: { children: ReactNode }) {
   return (
     <View

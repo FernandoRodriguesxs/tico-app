@@ -5,7 +5,6 @@ type Props = {
   onPress: () => void;
 };
 
-// Botão principal laranja (ex: "Começar").
 export function PrimaryButton({ label, onPress }: Props) {
   return (
     <Pressable

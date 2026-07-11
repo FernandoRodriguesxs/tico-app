@@ -7,7 +7,6 @@ type Props = {
   goal: number;
 };
 
-// Pílula de status "sem culpa": "faltam X kcal" (verde) ou "passou X kcal" (vermelho).
 export function StatusPill({ consumed, goal }: Props) {
   const remaining = goal - consumed;
   const over = remaining < 0;

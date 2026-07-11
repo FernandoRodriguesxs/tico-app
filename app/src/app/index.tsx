@@ -5,8 +5,6 @@ import { router } from 'expo-router';
 import { LoadingDots } from '@/components/loading-dots';
 import { getGoal } from '@/lib/storage';
 
-// Tela 01 — Splash. Mostra a marca e decide a rota inicial:
-// já tem meta salva -> "Hoje"; primeira vez -> "Onboarding".
 export default function Splash() {
   useEffect(() => {
     const timer = setTimeout(async () => {

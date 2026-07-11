@@ -9,7 +9,6 @@ type Props = {
   onSend: () => void;
 };
 
-// Barra de input fixa: campo de texto + botão de enviar (seta pra cima).
 export function ChatInput({ value, onChangeText, onSend }: Props) {
   return (
     <View

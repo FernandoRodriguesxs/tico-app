@@ -16,7 +16,6 @@ import {
 
 import { COLORS } from '@/lib/theme';
 
-// Mantém a splash nativa até as fontes carregarem (evita "pulo" de fonte).
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

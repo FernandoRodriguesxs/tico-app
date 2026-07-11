@@ -24,7 +24,16 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - **PostgreSQL no Neon** (nuvem, região São Paulo), conectado no DBeaver.
 - **`api/` com Prisma 6** ligado ao Neon. **Tabelas `User` e `Meal` criadas** (1ª migration `init`).
 - **Usuário de teste** semeado: `test-user` (`teste@tico.app`, meta 2000) — dono das refeições até existir login.
-- Ainda **sem NestJS**, **sem endpoints**, **sem login** e **sem LLM** (próximos blocos). O app ainda NÃO fala com o backend.
+- O app ainda NÃO fala com o backend (isso é a próxima fase).
+
+### Backend v1 — API NestJS (CONCLUÍDA)
+- **NestJS 11** em `api/` (`controller → service → prisma`, sem DDD).
+- Endpoints REST escopados ao `test-user`:
+  - `GET/POST/PATCH/DELETE /meals` — o POST estima `food`+`kcal` **no backend** (dicionário portado do app).
+  - `GET /me` e `PATCH /me/goal` — ler/mudar a meta.
+- **Swagger** em `/docs` (testar a API no navegador). CORS + `ValidationPipe` ligados.
+- Verificado via `curl` (todos os endpoints + 400s de validação); banco fica limpo após os testes.
+- Ainda **sem login/JWT** e **sem LLM** (a estimativa é o dicionário local, mas agora roda no backend).
 
 ### O que ainda é "de mentira" (proposital pro MVP)
 - **Estimador de calorias**: roda por um dicionário local em `app/src/lib/estimator.ts` (portado do design). Limitado — só reconhece comidas comuns. **Será trocado por chamada real ao LLM via backend.**
@@ -41,7 +50,8 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - **react-native-svg** (anel de progresso).
 - Regras do projeto: ver `CLAUDE.md` na raiz (didático, passos incrementais, commits por bloco responsável, tom "sem culpa", backend sem DDD, **sem comentários no código**).
 - **Backend: Prisma 6** (fixado — o Prisma 7 muda a mecânica com `prisma.config.ts` + driver adapter; ficamos no 6 por ser mais simples e documentado). Banco no **Neon** (Postgres).
-- **`.env` único na raiz** (`tico/.env`, gitignored) com `DATABASE_URL` (conexão **direta** do Neon, sem `-pooler`). Os scripts do Prisma em `api/` carregam ele via `dotenv-cli` (`dotenv -e ../.env -- ...`).
+- **`.env` único na raiz** (`tico/.env`, gitignored) com `DATABASE_URL` (conexão **direta** do Neon, sem `-pooler`). Os scripts em `api/` carregam ele via `dotenv-cli` (`dotenv -e ../.env -- ...`).
+- **NestJS 11 + TypeScript 5** (o TS 7 nativo ainda não é suportado pelo Nest 11 — fixado no 5). Swagger em `/docs`.
 
 ### Gotcha conhecido (Baloo 2)
 No RN, `lineHeight == fontSize` corta o topo dos glifos altos da Baloo. Nos números/títulos grandes, usar `lineHeight` folgado (~1.2×).
@@ -63,12 +73,19 @@ tico/
       lib/         theme (tokens+fontes), storage (meta), estimator (simulado)
     assets/tico.png  mascote real (PNG transparente)
   .env             DATABASE_URL do Neon (gitignored — o único .env)
-  api/             backend (Prisma; NestJS ainda não)
+  api/             backend NestJS + Prisma
+    src/
+      main.ts        bootstrap: Swagger /docs, CORS, validação
+      app.module.ts
+      prisma/        PrismaModule + PrismaService
+      meals/         controller/service/dto + estimator (no backend)
+      users/         GET /me, PATCH /me/goal
+      common/        TEST_USER_ID
     prisma/
       schema.prisma  models User + Meal
       migrations/    init (cria as tabelas)
       seed.ts        usuário de teste
-    package.json     scripts: generate/migrate/studio/seed (via dotenv-cli)
+    package.json     scripts: start/start:dev + generate/migrate/studio/seed (dotenv-cli)
 ```
 
 ---
@@ -83,14 +100,15 @@ Escanear o QR com a Câmera do iPhone (Expo Go instalado, mesma Wi-Fi). Se a Wi-
 
 Verificações rápidas: `npx tsc --noEmit` e `npx expo export --platform web`.
 
-### Backend (Prisma / banco)
+### Backend (NestJS + Prisma)
 ```powershell
 cd api
+npm run start:dev  # sobe a API em http://localhost:3000 (Swagger em /docs)
 npm run studio     # abre o Prisma Studio no navegador (ver/editar dados)
 npm run migrate    # aplica mudancas de schema (pede --name na 1a vez)
 npm run seed       # recria o usuario de teste
 ```
-Precisa do `tico/.env` presente (não vai no git). No DBeaver, dar Refresh na conexão `neondb` pra ver as tabelas.
+Precisa do `tico/.env` presente (não vai no git). No DBeaver, dar Refresh na conexão `neondb` pra ver as tabelas. Pra testar a API do **celular**: abrir `http://IP-DO-PC:3000/docs` no Safari (mesma Wi-Fi).
 
 ---
 
@@ -100,11 +118,11 @@ Precisa do `tico/.env` presente (não vai no git). No DBeaver, dar Refresh na co
 - [x] ~~Editar a meta diária~~ — **feito**: modal ao tocar no anel.
 - [ ] **1. Persistir refeições do dia** (AsyncStorage) — rápido; tira o "some ao recarregar". (a meta já persiste)
 - [x] ~~Banco + tabelas (Prisma + Neon)~~ — **feito**: `User` + `Meal` criadas, usuário de teste semeado.
-- [ ] **2. NestJS** (`api/` com `controller → service → prisma`) + endpoints REST de refeições/meta usando o `test-user`. **Pedir plano antes.**
-- [ ] **3. Ligar o app ao backend**: trocar o estimador/estado local por chamadas à API (camada de serviço em `app/src/lib`). Resolve também o "refeições somem ao recarregar".
-- [ ] **4. LLM real** no backend (endpoint que recebe texto → JSON estruturado). PRD §8/§9.
-- [ ] **5. Autenticação** (e-mail/senha + JWT + tela de login) — PRD 6.6. Troca o `test-user` fixo pelo id do JWT.
-- [ ] **6. Ajustes visuais** notados rodando no celular.
+- [x] ~~NestJS + endpoints REST~~ — **feito**: CRUD de refeição + meta, estimador no backend, Swagger em `/docs`.
+- [ ] **1. Ligar o app ao backend**: trocar o estimador/estado local por chamadas à API (camada de serviço em `app/src/lib`). Resolve também o "refeições somem ao recarregar". **Pedir plano antes.**
+- [ ] **2. LLM real** no backend (endpoint que recebe texto → JSON estruturado). PRD §8/§9.
+- [ ] **3. Autenticação** (e-mail/senha + JWT + tela de login) — PRD 6.6. Troca o `test-user` fixo pelo id do JWT.
+- [ ] **4. Ajustes visuais** notados rodando no celular.
 
 ### Futuro (PRD, não prioritário agora)
 Macros, código de barras (Open Food Facts), tabela TACO, histórico de dias, insights "sem culpa", registro por foto, sincronização multi-aparelho.

@@ -1,7 +1,7 @@
 # Progresso do Tico — estado e próximos passos
 
 > Doc de continuidade: leia isto no início de cada sessão pra ter o contexto de onde paramos.
-> **Última atualização:** 11/07/2026
+> **Última atualização:** 15/07/2026
 
 ---
 
@@ -35,9 +35,18 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - Verificado via `curl` (todos os endpoints + 400s de validação); banco fica limpo após os testes.
 - Ainda **sem login/JWT** e **sem LLM** (a estimativa é o dicionário local, mas agora roda no backend).
 
+### App ↔ API — refeições e meta via backend (CONCLUÍDA, testada no device)
+- O app **fala com a API**: no abrir, busca meta (`GET /me`) e refeições do dia (`GET /meals`); registrar/editar/excluir e mudar a meta viram chamadas à API.
+- **Refeições PERSISTEM** — fecha e reabre o app e continuam lá (vêm do banco). Fim do "somem ao recarregar".
+- URL do backend descoberta sozinha pelo host do Metro (`Constants.expoConfig.hostUri` + porta 3000) — sem `.env` no app, sem IP fixo.
+- Novos: `app/src/lib/api.ts` (cliente HTTP) e `app/src/lib/meal-display.ts` (emoji/reply de UI). O `estimator.ts` do app foi **removido** (a estimativa é no backend).
+- Tela Hoje ganhou **loading** e **erro** (API fora, com "tentar de novo"); onboarding salva a meta via `PATCH /me/goal`.
+- **Logger HTTP** no backend (`api/src/main.ts`): cada request aparece no terminal (`GET /meals 200 - 12ms`).
+- ⚠️ **O app agora precisa da API rodando** na mesma Wi-Fi — não funciona mais offline. **Sempre 2 terminais**: API (`npm run start:dev`) + Expo.
+
 ### O que ainda é "de mentira" (proposital pro MVP)
-- **Estimador de calorias**: roda por um dicionário local em `app/src/lib/estimator.ts` (portado do design). Limitado — só reconhece comidas comuns. **Será trocado por chamada real ao LLM via backend.**
-- **Refeições não persistem**: ao recarregar o app, as refeições do dia somem. Só a **meta** persiste (AsyncStorage). Falta persistir as refeições.
+- **Estimador de calorias**: dicionário local **no backend** (`api/src/meals/estimator.ts`). Limitado — só comidas comuns. **Será trocado por chamada real ao LLM.**
+- **Sem login**: tudo usa o `test-user` fixo. O login (JWT) vem depois.
 
 ---
 
@@ -70,7 +79,7 @@ tico/
       components/  loading-dots, speech-bubble, goal-stepper, primary-button,
                    progress-ring, status-pill, chat-bubble, meal-card, chat-input,
                    goal-editor-modal, meal-editor-modal
-      lib/         theme (tokens+fontes), storage (meta), estimator (simulado)
+      lib/         theme, api (cliente HTTP), meal-display (emoji/reply), storage (flag onboarding)
     assets/tico.png  mascote real (PNG transparente)
   .env             DATABASE_URL do Neon (gitignored — o único .env)
   api/             backend NestJS + Prisma
@@ -92,11 +101,15 @@ tico/
 
 ## Como retomar (rodar o app)
 
+⚠️ Agora precisa de **DOIS terminais** (o app depende da API): um pra API, outro pro Expo. Não use `--tunnel` (quebra a descoberta da URL da API).
+
+**Terminal 1 — API:** `cd api && npm run start:dev`
+**Terminal 2 — Expo:**
 ```powershell
 cd app
 npx expo start -c      # -c limpa o cache do Metro
 ```
-Escanear o QR com a Câmera do iPhone (Expo Go instalado, mesma Wi-Fi). Se a Wi-Fi isolar dispositivos: `npx expo start --tunnel`.
+Escanear o QR com a Câmera do iPhone (Expo Go instalado, mesma Wi-Fi).
 
 Verificações rápidas: `npx tsc --noEmit` e `npx expo export --platform web`.
 
@@ -114,18 +127,18 @@ Precisa do `tico/.env` presente (não vai no git). No DBeaver, dar Refresh na co
 
 ## Próximas fases / backlog (em ordem sugerida)
 
-- [x] ~~Editar / excluir refeição~~ (PRD 6.4) — **feito**: bottom sheet ao tocar no card.
-- [x] ~~Editar a meta diária~~ — **feito**: modal ao tocar no anel.
-- [ ] **1. Persistir refeições do dia** (AsyncStorage) — rápido; tira o "some ao recarregar". (a meta já persiste)
-- [x] ~~Banco + tabelas (Prisma + Neon)~~ — **feito**: `User` + `Meal` criadas, usuário de teste semeado.
-- [x] ~~NestJS + endpoints REST~~ — **feito**: CRUD de refeição + meta, estimador no backend, Swagger em `/docs`.
-- [ ] **1. Ligar o app ao backend**: trocar o estimador/estado local por chamadas à API (camada de serviço em `app/src/lib`). Resolve também o "refeições somem ao recarregar". **Pedir plano antes.**
+- [x] ~~Editar / excluir refeição~~ (PRD 6.4) — **feito**.
+- [x] ~~Editar a meta diária~~ — **feito**.
+- [x] ~~Banco + tabelas (Prisma + Neon)~~ — **feito**.
+- [x] ~~NestJS + endpoints REST~~ — **feito**: CRUD de refeição + meta, Swagger em `/docs`.
+- [x] ~~Ligar o app à API (refeições + meta)~~ — **feito**: persistem no banco; testado no device.
+- [ ] **1. Tela de refeições** (ideia nova do Fernando) — uma tela pra **ver as refeições registradas**: **histórico de dias anteriores** (total por dia) **+ uma lista limpa do dia atual** (fora do formato de chat). Envolve: ajuste no backend pra buscar por dia (`GET /meals?date=` ou endpoint de histórico), navegação (aba/botão) e tom "sem culpa" (celebrar consistência, nunca cobrar). Casa com o "Histórico" da Fase 2 do PRD. **Pedir plano antes.**
 - [ ] **2. LLM real** no backend (endpoint que recebe texto → JSON estruturado). PRD §8/§9.
 - [ ] **3. Autenticação** (e-mail/senha + JWT + tela de login) — PRD 6.6. Troca o `test-user` fixo pelo id do JWT.
 - [ ] **4. Ajustes visuais** notados rodando no celular.
 
 ### Futuro (PRD, não prioritário agora)
-Macros, código de barras (Open Food Facts), tabela TACO, histórico de dias, insights "sem culpa", registro por foto, sincronização multi-aparelho.
+Macros, código de barras (Open Food Facts), tabela TACO, insights "sem culpa", registro por foto, sincronização multi-aparelho.
 
 ---
 

@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChatBubble } from '@/components/chat-bubble';
@@ -9,22 +19,40 @@ import { MealCard } from '@/components/meal-card';
 import { MealEditorModal } from '@/components/meal-editor-modal';
 import { ProgressRing } from '@/components/progress-ring';
 import { StatusPill } from '@/components/status-pill';
-import { buildMeal, type Meal } from '@/lib/estimator';
-import { getGoal, setGoal as saveGoal } from '@/lib/storage';
+import * as api from '@/lib/api';
+import { emojiFor, pickReply, type UIMeal } from '@/lib/meal-display';
+import { COLORS } from '@/lib/theme';
+
+function notifyError() {
+  Alert.alert('Ops', 'Não consegui falar com o servidor 🐿️\nVeja se ele está no ar e tente de novo.');
+}
 
 export default function Hoje() {
   const [goal, setGoal] = useState(2000);
-  const [meals, setMeals] = useState<Meal[]>([]);
+  const [meals, setMeals] = useState<UIMeal[]>([]);
   const [draft, setDraft] = useState('');
   const [editingGoal, setEditingGoal] = useState(false);
-  const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
-  const nextId = useRef(1);
+  const [editingMeal, setEditingMeal] = useState<UIMeal | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
+  const load = async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const [me, list] = await Promise.all([api.getMe(), api.getMeals()]);
+      setGoal(me.dailyGoalKcal);
+      setMeals(list.map((m) => ({ ...m, emoji: emojiFor(m.id) })));
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    getGoal().then((g) => {
-      if (g != null) setGoal(g);
-    });
+    load();
   }, []);
 
   useEffect(() => {
@@ -33,27 +61,47 @@ export default function Hoje() {
 
   const consumed = meals.reduce((acc, m) => acc + m.kcal, 0);
 
-  const send = () => {
-    if (!draft.trim()) return;
-    setMeals((prev) => [...prev, { ...buildMeal(draft), id: nextId.current++ }]);
+  const send = async () => {
+    const text = draft.trim();
+    if (!text) return;
     setDraft('');
     Keyboard.dismiss();
+    try {
+      const created = await api.createMeal(text);
+      setMeals((prev) => [...prev, { ...created, emoji: emojiFor(created.id), reply: pickReply() }]);
+    } catch {
+      notifyError();
+    }
   };
 
-  const saveNewGoal = (newGoal: number) => {
-    setGoal(newGoal);
-    saveGoal(newGoal);
+  const saveNewGoal = async (newGoal: number) => {
     setEditingGoal(false);
+    setGoal(newGoal);
+    try {
+      await api.updateGoal(newGoal);
+    } catch {
+      notifyError();
+    }
   };
 
-  const saveMeal = (id: number, food: string, kcal: number) => {
-    setMeals((prev) => prev.map((m) => (m.id === id ? { ...m, food, kcal } : m)));
+  const saveMeal = async (id: string, food: string, kcal: number) => {
     setEditingMeal(null);
+    try {
+      const updated = await api.updateMeal(id, { food, kcal });
+      setMeals((prev) => prev.map((m) => (m.id === id ? { ...m, ...updated } : m)));
+    } catch {
+      notifyError();
+    }
   };
 
-  const deleteMeal = (id: number) => {
-    setMeals((prev) => prev.filter((m) => m.id !== id));
+  const deleteMeal = async (id: string) => {
     setEditingMeal(null);
+    try {
+      await api.deleteMeal(id);
+      setMeals((prev) => prev.filter((m) => m.id !== id));
+    } catch {
+      notifyError();
+    }
   };
 
   return (
@@ -67,21 +115,39 @@ export default function Hoje() {
           <StatusPill consumed={consumed} goal={goal} />
         </View>
 
-        <ScrollView
-          ref={scrollRef}
-          className="flex-1 px-[22px]"
-          contentContainerStyle={{ gap: 12, paddingTop: 18, paddingBottom: 12 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <ChatBubble from="bot" text="Oi! Me conta o que você comeu que eu vou somando 🐿️" />
-          {meals.map((m) => (
-            <View key={m.id} style={{ gap: 12 }}>
-              <ChatBubble from="user" text={m.text} />
-              <ChatBubble from="bot" text={m.reply} />
-              <MealCard emoji={m.emoji} food={m.food} kcal={m.kcal} onPress={() => setEditingMeal(m)} />
-            </View>
-          ))}
-        </ScrollView>
+        {loading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color={COLORS.brand} />
+          </View>
+        ) : loadError ? (
+          <View className="flex-1 items-center justify-center gap-3 px-10">
+            <Text className="text-center font-nunito-bold text-[16px] text-muted">
+              Não consegui carregar 🐿️{'\n'}O servidor está no ar?
+            </Text>
+            <Pressable
+              onPress={load}
+              className="h-[46px] items-center justify-center rounded-full bg-brand px-6 active:scale-95"
+            >
+              <Text className="font-baloo text-[16px] text-white">Tentar de novo</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <ScrollView
+            ref={scrollRef}
+            className="flex-1 px-[22px]"
+            contentContainerStyle={{ gap: 12, paddingTop: 18, paddingBottom: 12 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <ChatBubble from="bot" text="Oi! Me conta o que você comeu que eu vou somando 🐿️" />
+            {meals.map((m) => (
+              <View key={m.id} style={{ gap: 12 }}>
+                <ChatBubble from="user" text={m.text} />
+                {m.reply ? <ChatBubble from="bot" text={m.reply} /> : null}
+                <MealCard emoji={m.emoji} food={m.food} kcal={m.kcal} onPress={() => setEditingMeal(m)} />
+              </View>
+            ))}
+          </ScrollView>
+        )}
 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ChatInput value={draft} onChangeText={setDraft} onSend={send} />

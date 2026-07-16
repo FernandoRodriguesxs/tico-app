@@ -11,17 +11,17 @@ import {
 import Svg, { Path } from 'react-native-svg';
 
 import { COLORS, fmt } from '@/lib/theme';
-import type { Meal } from '@/lib/estimator';
+import type { UIMeal } from '@/lib/meal-display';
 
 const STEP = 10;
 const MIN = 0;
 const MAX = 5000;
 
 type Props = {
-  meal: Meal | null;
+  meal: UIMeal | null;
   onClose: () => void;
-  onSave: (id: number, food: string, kcal: number) => void;
-  onDelete: (id: number) => void;
+  onSave: (id: string, food: string, kcal: number) => void;
+  onDelete: (id: string) => void;
 };
 
 export function MealEditorModal({ meal, onClose, onSave, onDelete }: Props) {

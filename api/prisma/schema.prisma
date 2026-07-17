@@ -16,6 +16,18 @@ model User {
   meals         Meal[]
 }
 
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
 model Meal {
   id         String   @id @default(cuid())
   userId     String

@@ -1,7 +1,7 @@
 # Progresso do Tico — estado e próximos passos
 
 > Doc de continuidade: leia isto no início de cada sessão pra ter o contexto de onde paramos.
-> **Última atualização:** 15/07/2026
+> **Última atualização:** 17/07/2026
 
 ---
 
@@ -44,6 +44,13 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - **Logger HTTP** no backend (`api/src/main.ts`): cada request aparece no terminal (`GET /meals 200 - 12ms`).
 - ⚠️ **O app agora precisa da API rodando** na mesma Wi-Fi — não funciona mais offline. **Sempre 2 terminais**: API (`npm run start:dev`) + Expo.
 
+### Tela de Refeições — Histórico + Detalhe (CONCLUÍDA, testada no device)
+- **Navegação por tabs** (Expo Router): **Hoje | Histórico**. Splash/Onboarding ficam fora das abas; **Detalhe** (`/dia/[date]`) é tela empilhada. `hoje.tsx` foi movido pra `src/app/(tabs)/`.
+- **Histórico** (`(tabs)/historico.tsx`): lista de dias (Hoje sempre no topo) com mini-anel + total + **badge de status** (verde "bateu a meta" / âmbar "faltaram" / vermelho "passou") + estado vazio com mascote. Recarrega ao focar a aba (`useFocusEffect`).
+- **Detalhe do dia** (`dia/[date].tsx`): voltar + anel grande + status + lista de refeições **read-only**.
+- **Backend**: `GET /meals?date=YYYY-MM-DD` (dia específico) e `GET /meals/history?limit=14` (resumo `[{date,totalKcal}]`, agrupado por dia **local** em JS). Status calculado no app.
+- Regra "**bateu a meta**": dia em **≥ 90% da meta sem passar** (`src/lib/day-status.ts`). Datas formatadas em `src/lib/dates.ts` ("Hoje"/"Ontem"/"Sáb · 12/07").
+
 ### O que ainda é "de mentira" (proposital pro MVP)
 - **Estimador de calorias**: dicionário local **no backend** (`api/src/meals/estimator.ts`). Limitado — só comidas comuns. **Será trocado por chamada real ao LLM.**
 - **Sem login**: tudo usa o `test-user` fixo. O login (JWT) vem depois.
@@ -75,11 +82,14 @@ tico/
   CLAUDE.md        regras do projeto
   app/             app Expo
     src/
-      app/         rotas: _layout, index (splash), onboarding, hoje
+      app/         _layout, index (splash), onboarding,
+                   (tabs)/ [_layout, hoje, historico], dia/[date] (detalhe)
       components/  loading-dots, speech-bubble, goal-stepper, primary-button,
                    progress-ring, status-pill, chat-bubble, meal-card, chat-input,
-                   goal-editor-modal, meal-editor-modal
-      lib/         theme, api (cliente HTTP), meal-display (emoji/reply), storage (flag onboarding)
+                   goal-editor-modal, meal-editor-modal,
+                   mini-ring, status-badge, day-row, detail-meal-card
+      lib/         theme, api (cliente HTTP), meal-display, storage (flag),
+                   day-status (regra >=90%), dates (formata dia)
     assets/tico.png  mascote real (PNG transparente)
   .env             DATABASE_URL do Neon (gitignored — o único .env)
   api/             backend NestJS + Prisma
@@ -132,10 +142,10 @@ Precisa do `tico/.env` presente (não vai no git). No DBeaver, dar Refresh na co
 - [x] ~~Banco + tabelas (Prisma + Neon)~~ — **feito**.
 - [x] ~~NestJS + endpoints REST~~ — **feito**: CRUD de refeição + meta, Swagger em `/docs`.
 - [x] ~~Ligar o app à API (refeições + meta)~~ — **feito**: persistem no banco; testado no device.
-- [ ] **1. Tela de refeições** (ideia nova do Fernando) — uma tela pra **ver as refeições registradas**: **histórico de dias anteriores** (total por dia) **+ uma lista limpa do dia atual** (fora do formato de chat). Envolve: ajuste no backend pra buscar por dia (`GET /meals?date=` ou endpoint de histórico), navegação (aba/botão) e tom "sem culpa" (celebrar consistência, nunca cobrar). Casa com o "Histórico" da Fase 2 do PRD. **Pedir plano antes.**
-- [ ] **2. LLM real** no backend (endpoint que recebe texto → JSON estruturado). PRD §8/§9.
-- [ ] **3. Autenticação** (e-mail/senha + JWT + tela de login) — PRD 6.6. Troca o `test-user` fixo pelo id do JWT.
-- [ ] **4. Ajustes visuais** notados rodando no celular.
+- [x] ~~Tela de Refeições (Histórico + Detalhe + tab bar)~~ — **feito**: testado no device.
+- [ ] **1. LLM real** no backend (endpoint que recebe texto → JSON estruturado, substitui o dicionário). PRD §8/§9.
+- [ ] **2. Autenticação** (e-mail/senha + JWT + tela de login) — PRD 6.6. Troca o `test-user` fixo pelo id do JWT. (Fernando comentou que tem outra ideia sobre login — perguntar antes.)
+- [ ] **3. Ajustes visuais** notados rodando no celular.
 
 ### Futuro (PRD, não prioritário agora)
 Macros, código de barras (Open Food Facts), tabela TACO, insights "sem culpa", registro por foto, sincronização multi-aparelho.

@@ -5,24 +5,54 @@ import { estimateKcal, toFoodLabel } from './estimator';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { UpdateMealDto } from './dto/update-meal.dto';
 
-function todayRange() {
-  const start = new Date();
+function dayRange(date?: string) {
+  const base = date ? new Date(`${date}T00:00:00`) : new Date();
+  const start = Number.isNaN(base.getTime()) ? new Date() : base;
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
   return { start, end };
 }
 
+function localDateKey(d: Date) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 @Injectable()
 export class MealsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findToday() {
-    const { start, end } = todayRange();
+  findByDay(date?: string) {
+    const { start, end } = dayRange(date);
     return this.prisma.meal.findMany({
       where: { userId: TEST_USER_ID, eatenAt: { gte: start, lt: end } },
       orderBy: { eatenAt: 'asc' },
     });
+  }
+
+  async history(limit: number) {
+    const days = Math.min(Math.max(limit, 1), 60);
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    since.setDate(since.getDate() - (days - 1));
+
+    const meals = await this.prisma.meal.findMany({
+      where: { userId: TEST_USER_ID, eatenAt: { gte: since } },
+      orderBy: { eatenAt: 'desc' },
+    });
+
+    const totals = new Map<string, number>();
+    for (const meal of meals) {
+      const key = localDateKey(meal.eatenAt);
+      totals.set(key, (totals.get(key) ?? 0) + meal.kcal);
+    }
+
+    return [...totals.entries()]
+      .map(([date, totalKcal]) => ({ date, totalKcal }))
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
   }
 
   create(dto: CreateMealDto) {

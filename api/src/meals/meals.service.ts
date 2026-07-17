@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { TEST_USER_ID } from '../common/constants';
 import { estimateKcal, toFoodLabel } from './estimator';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { UpdateMealDto } from './dto/update-meal.dto';
@@ -25,22 +24,22 @@ function localDateKey(d: Date) {
 export class MealsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByDay(date?: string) {
+  findByDay(userId: string, date?: string) {
     const { start, end } = dayRange(date);
     return this.prisma.meal.findMany({
-      where: { userId: TEST_USER_ID, eatenAt: { gte: start, lt: end } },
+      where: { userId, eatenAt: { gte: start, lt: end } },
       orderBy: { eatenAt: 'asc' },
     });
   }
 
-  async history(limit: number) {
+  async history(userId: string, limit: number) {
     const days = Math.min(Math.max(limit, 1), 60);
     const since = new Date();
     since.setHours(0, 0, 0, 0);
     since.setDate(since.getDate() - (days - 1));
 
     const meals = await this.prisma.meal.findMany({
-      where: { userId: TEST_USER_ID, eatenAt: { gte: since } },
+      where: { userId, eatenAt: { gte: since } },
       orderBy: { eatenAt: 'desc' },
     });
 
@@ -55,36 +54,29 @@ export class MealsService {
       .sort((a, b) => (a.date < b.date ? 1 : -1));
   }
 
-  create(dto: CreateMealDto) {
+  create(userId: string, dto: CreateMealDto) {
     const text = dto.text.trim();
     return this.prisma.meal.create({
-      data: {
-        userId: TEST_USER_ID,
-        text,
-        food: toFoodLabel(text),
-        kcal: estimateKcal(text),
-      },
+      data: { userId, text, food: toFoodLabel(text), kcal: estimateKcal(text) },
     });
   }
 
-  async update(id: string, dto: UpdateMealDto) {
-    await this.ensureOwned(id);
+  async update(userId: string, id: string, dto: UpdateMealDto) {
+    await this.ensureOwned(userId, id);
     return this.prisma.meal.update({
       where: { id },
       data: { food: dto.food, kcal: dto.kcal },
     });
   }
 
-  async remove(id: string) {
-    await this.ensureOwned(id);
+  async remove(userId: string, id: string) {
+    await this.ensureOwned(userId, id);
     await this.prisma.meal.delete({ where: { id } });
     return { ok: true };
   }
 
-  private async ensureOwned(id: string) {
-    const meal = await this.prisma.meal.findFirst({
-      where: { id, userId: TEST_USER_ID },
-    });
+  private async ensureOwned(userId: string, id: string) {
+    const meal = await this.prisma.meal.findFirst({ where: { id, userId } });
     if (!meal) throw new NotFoundException('Refeição não encontrada');
   }
 }

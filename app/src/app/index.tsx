@@ -3,13 +3,13 @@ import { Image, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { LoadingDots } from '@/components/loading-dots';
-import { getOnboardingDone } from '@/lib/storage';
+import { getToken } from '@/lib/session';
 
 export default function Splash() {
   useEffect(() => {
     const timer = setTimeout(async () => {
-      const done = await getOnboardingDone();
-      router.replace(done ? '/hoje' : '/onboarding');
+      const token = await getToken();
+      router.replace(token ? '/hoje' : '/login/email');
     }, 1600);
     return () => clearTimeout(timer);
   }, []);

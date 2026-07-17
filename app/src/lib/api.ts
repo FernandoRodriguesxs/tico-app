@@ -1,5 +1,7 @@
 import Constants from 'expo-constants';
 
+import { clearToken, getToken } from './session';
+
 function resolveBaseUrl(): string {
   const host = Constants.expoConfig?.hostUri?.split(':')[0];
   return host ? `http://${host}:3000` : 'http://localhost:3000';
@@ -28,14 +30,43 @@ export type DaySummary = {
   totalKcal: number;
 };
 
+export type VerifyResult = {
+  token: string;
+  user: Me;
+  isNew: boolean;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = await getToken();
   const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers ?? {}),
+    },
   });
+  if (response.status === 401) {
+    await clearToken();
+    throw new Error('Sessão expirada');
+  }
   if (!response.ok) throw new Error(`Falha na requisição (${response.status})`);
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export function requestCode(email: string) {
+  return request<{ ok: boolean }>('/auth/request-code', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function verifyCode(email: string, code: string) {
+  return request<VerifyResult>('/auth/verify', {
+    method: 'POST',
+    body: JSON.stringify({ email, code }),
+  });
 }
 
 export function getMe() {

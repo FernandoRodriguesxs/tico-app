@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DayRow } from '@/components/day-row';
 import * as api from '@/lib/api';
+import { clearToken } from '@/lib/session';
 import { COLORS } from '@/lib/theme';
 import { todayKey } from '@/lib/dates';
 
@@ -34,6 +35,11 @@ export default function Historico() {
     }, [load]),
   );
 
+  const logout = async () => {
+    await clearToken();
+    router.replace('/login/email');
+  };
+
   const tKey = todayKey();
   const rows =
     days.length === 0 ? [] : days.some((d) => d.date === tKey) ? days : [{ date: tKey, totalKcal: 0 }, ...days];
@@ -41,9 +47,14 @@ export default function Historico() {
   return (
     <View className="flex-1 bg-cream">
       <SafeAreaView className="flex-1" edges={['top']}>
-        <View className="px-6 pb-[14px] pt-2">
-          <Text className="font-baloo-x text-[30px] leading-[36px] text-ink">Histórico</Text>
-          <Text className="mt-1 font-nunito-semi text-[15px] text-muted">seus últimos dias, sem cobrança 🌿</Text>
+        <View className="flex-row items-start justify-between px-6 pb-[14px] pt-2">
+          <View className="flex-1">
+            <Text className="font-baloo-x text-[30px] leading-[36px] text-ink">Histórico</Text>
+            <Text className="mt-1 font-nunito-semi text-[15px] text-muted">seus últimos dias, sem cobrança 🌿</Text>
+          </View>
+          <Pressable onPress={logout} className="mt-1 p-1 active:opacity-60">
+            <Text className="font-nunito-x text-[14px] text-muted-light">Sair</Text>
+          </Pressable>
         </View>
 
         {loading ? (

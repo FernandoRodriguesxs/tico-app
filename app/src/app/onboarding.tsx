@@ -7,7 +7,6 @@ import { GoalStepper } from '@/components/goal-stepper';
 import { PrimaryButton } from '@/components/primary-button';
 import { SpeechBubble } from '@/components/speech-bubble';
 import { updateGoal } from '@/lib/api';
-import { setOnboardingDone } from '@/lib/storage';
 
 const STEP = 50;
 const MIN = 800;
@@ -22,7 +21,6 @@ export default function Onboarding() {
     setSaving(true);
     try {
       await updateGoal(goal);
-      await setOnboardingDone(true);
       router.replace('/hoje');
     } catch {
       setSaving(false);

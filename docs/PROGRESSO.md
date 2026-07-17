@@ -33,7 +33,7 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
   - `GET /me` e `PATCH /me/goal` — ler/mudar a meta.
 - **Swagger** em `/docs` (testar a API no navegador). CORS + `ValidationPipe` ligados.
 - Verificado via `curl` (todos os endpoints + 400s de validação); banco fica limpo após os testes.
-- Ainda **sem login/JWT** e **sem LLM** (a estimativa é o dicionário local, mas agora roda no backend).
+- Nesse ponto ainda era **sem login** e **sem LLM** (login veio depois; LLM ainda pendente).
 
 ### App ↔ API — refeições e meta via backend (CONCLUÍDA, testada no device)
 - O app **fala com a API**: no abrir, busca meta (`GET /me`) e refeições do dia (`GET /meals`); registrar/editar/excluir e mudar a meta viram chamadas à API.
@@ -51,9 +51,15 @@ Repositório: https://github.com/FernandoRodriguesxs/tico-app (branch `main`).
 - **Backend**: `GET /meals?date=YYYY-MM-DD` (dia específico) e `GET /meals/history?limit=14` (resumo `[{date,totalKcal}]`, agrupado por dia **local** em JS). Status calculado no app.
 - Regra "**bateu a meta**": dia em **≥ 90% da meta sem passar** (`src/lib/day-status.ts`). Datas formatadas em `src/lib/dates.ts` ("Hoje"/"Ontem"/"Sáb · 12/07").
 
+### Login por OTP (CONCLUÍDA, testada no device)
+- **Login sem senha**: digita o e-mail → recebe **código de 6 dígitos** (Resend) → entra. Emite **JWT** (30 dias).
+- Telas `src/app/login/email.tsx` e `login/codigo.tsx` (input de 6 caixinhas `otp-input`); Splash roteia por token; usuário novo → Onboarding.
+- **Sessão**: token no `expo-secure-store` (`src/lib/session.ts`); `api.ts` manda `Authorization: Bearer` e desloga em 401. **"Sair"** no topo do Histórico.
+- **Backend**: `AuthModule` (`/auth/request-code`, `/auth/verify`); `JwtAuthGuard` protege refeição/meta e o `userId` vem do **token** (o `test-user` fixo saiu do código). Segurança: código com hash, expira 10min, uso único, máx 5 tentativas, rate-limit 45s.
+- ⚠️ Resend em dev entrega só pro **próprio e-mail** do cadastro; pra outros, o código aparece no **log** do backend (dev). `RESEND_API_KEY` e `JWT_SECRET` no `tico/.env`.
+
 ### O que ainda é "de mentira" (proposital pro MVP)
 - **Estimador de calorias**: dicionário local **no backend** (`api/src/meals/estimator.ts`). Limitado — só comidas comuns. **Será trocado por chamada real ao LLM.**
-- **Sem login**: tudo usa o `test-user` fixo. O login (JWT) vem depois.
 
 ---
 
@@ -143,9 +149,11 @@ Precisa do `tico/.env` presente (não vai no git). No DBeaver, dar Refresh na co
 - [x] ~~NestJS + endpoints REST~~ — **feito**: CRUD de refeição + meta, Swagger em `/docs`.
 - [x] ~~Ligar o app à API (refeições + meta)~~ — **feito**: persistem no banco; testado no device.
 - [x] ~~Tela de Refeições (Histórico + Detalhe + tab bar)~~ — **feito**: testado no device.
+- [x] ~~Login por OTP (e-mail → código → JWT) + guard~~ — **feito**: testado no device.
 - [ ] **1. LLM real** no backend (endpoint que recebe texto → JSON estruturado, substitui o dicionário). PRD §8/§9.
-- [ ] **2. Autenticação** (e-mail/senha + JWT + tela de login) — PRD 6.6. Troca o `test-user` fixo pelo id do JWT. (Fernando comentou que tem outra ideia sobre login — perguntar antes.)
+- [ ] **2. Login com Google** — mais um jeito de gerar o mesmo JWT (o Fernando pediu pra deixar pra depois).
 - [ ] **3. Ajustes visuais** notados rodando no celular.
+- [ ] Melhorias de auth (futuro): "lembrar e-mail" no login, refresh token / revogação (deslogar de todos os aparelhos), verificar domínio no Resend (enviar pra qualquer e-mail).
 
 ### Futuro (PRD, não prioritário agora)
 Macros, código de barras (Open Food Facts), tabela TACO, insights "sem culpa", registro por foto, sincronização multi-aparelho.

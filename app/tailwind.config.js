@@ -19,6 +19,12 @@ module.exports = {
         sheet: '#FFF9EC',
         handle: '#E7D9BE',
         field: '#F0E4CB',
+        'tab-inactive': '#C6B79E',
+        chevron: '#CDBFA6',
+        under: '#B07A3A',
+        'hit-bg': '#EAF3E7',
+        'under-bg': '#FBEFD9',
+        'over-bg': '#FBEAE5',
       },
       fontFamily: {
         baloo: ['Baloo2_700Bold'],

@@ -23,6 +23,11 @@ export type Me = {
   dailyGoalKcal: number;
 };
 
+export type DaySummary = {
+  date: string;
+  totalKcal: number;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -44,8 +49,12 @@ export function updateGoal(dailyGoalKcal: number) {
   });
 }
 
-export function getMeals() {
-  return request<ApiMeal[]>('/meals');
+export function getMeals(date?: string) {
+  return request<ApiMeal[]>(date ? `/meals?date=${date}` : '/meals');
+}
+
+export function getDays(limit = 14) {
+  return request<DaySummary[]>(`/meals/history?limit=${limit}`);
 }
 
 export function createMeal(text: string) {

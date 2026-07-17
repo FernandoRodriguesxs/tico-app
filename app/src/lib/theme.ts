@@ -13,6 +13,12 @@ export const COLORS = {
   card: '#FFF0DF',
   line: '#FCD9C2',
   white: '#FFFFFF',
+  tabInactive: '#C6B79E',
+  chevron: '#CDBFA6',
+  underText: '#B07A3A',
+  hitBg: '#EAF3E7',
+  underBg: '#FBEFD9',
+  overBg: '#FBEAE5',
 } as const;
 
 export const FONTS = {

@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { MealsService } from './meals.service';
 import { CreateMealDto } from './dto/create-meal.dto';
+import { CreateMealPhotoDto } from './dto/create-meal-photo.dto';
 import { UpdateMealDto } from './dto/update-meal.dto';
 
 @ApiTags('meals')
@@ -40,6 +41,11 @@ export class MealsController {
   @Post()
   create(@CurrentUser() userId: string, @Body() dto: CreateMealDto) {
     return this.meals.create(userId, dto);
+  }
+
+  @Post('photo')
+  createFromPhoto(@CurrentUser() userId: string, @Body() dto: CreateMealPhotoDto) {
+    return this.meals.createFromPhoto(userId, dto.imageBase64, dto.mimeType);
   }
 
   @Patch(':id')

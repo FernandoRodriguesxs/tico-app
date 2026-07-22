@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { VisionService, type VisionEstimate } from '../vision/vision.service';
 import { estimateKcal, toFoodLabel } from './estimator';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { UpdateMealDto } from './dto/update-meal.dto';
@@ -22,7 +23,10 @@ function localDateKey(d: Date) {
 
 @Injectable()
 export class MealsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly vision: VisionService,
+  ) {}
 
   findByDay(userId: string, date?: string) {
     const { start, end } = dayRange(date);
@@ -54,11 +58,39 @@ export class MealsService {
       .sort((a, b) => (a.date < b.date ? 1 : -1));
   }
 
-  create(userId: string, dto: CreateMealDto) {
+  async create(userId: string, dto: CreateMealDto) {
     const text = dto.text.trim();
+    const estimate = await this.estimateText(text);
     return this.prisma.meal.create({
-      data: { userId, text, food: toFoodLabel(text), kcal: estimateKcal(text) },
+      data: {
+        userId,
+        text,
+        food: estimate.food || toFoodLabel(text),
+        kcal: estimate.kcal,
+        confidence: estimate.confidence,
+      },
     });
+  }
+
+  async createFromPhoto(userId: string, imageBase64: string, mimeType: string) {
+    const estimate = await this.vision.estimate({ imageBase64, mimeType });
+    return this.prisma.meal.create({
+      data: {
+        userId,
+        text: 'Foto do prato',
+        food: estimate.food || 'Prato não identificado',
+        kcal: estimate.kcal,
+        confidence: estimate.confidence,
+      },
+    });
+  }
+
+  private async estimateText(text: string): Promise<VisionEstimate> {
+    try {
+      return await this.vision.estimate({ text });
+    } catch {
+      return { food: toFoodLabel(text), kcal: estimateKcal(text), confidence: null };
+    }
   }
 
   async update(userId: string, id: string, dto: UpdateMealDto) {

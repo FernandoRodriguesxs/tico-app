@@ -95,6 +95,13 @@ export function createMeal(text: string) {
   });
 }
 
+export function createMealFromPhoto(imageBase64: string, mimeType: string) {
+  return request<ApiMeal>('/meals/photo', {
+    method: 'POST',
+    body: JSON.stringify({ imageBase64, mimeType }),
+  });
+}
+
 export function updateMeal(id: string, data: { food?: string; kcal?: number }) {
   return request<ApiMeal>(`/meals/${id}`, {
     method: 'PATCH',

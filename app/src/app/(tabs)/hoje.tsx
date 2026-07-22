@@ -17,6 +17,7 @@ import { ChatInput } from '@/components/chat-input';
 import { GoalEditorModal } from '@/components/goal-editor-modal';
 import { MealCard } from '@/components/meal-card';
 import { MealEditorModal } from '@/components/meal-editor-modal';
+import { PhotoCaptureModal } from '@/components/photo-capture-modal';
 import { ProgressRing } from '@/components/progress-ring';
 import { StatusPill } from '@/components/status-pill';
 import * as api from '@/lib/api';
@@ -33,6 +34,7 @@ export default function Hoje() {
   const [draft, setDraft] = useState('');
   const [editingGoal, setEditingGoal] = useState(false);
   const [editingMeal, setEditingMeal] = useState<UIMeal | null>(null);
+  const [capturingPhoto, setCapturingPhoto] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -72,6 +74,10 @@ export default function Hoje() {
     } catch {
       notifyError();
     }
+  };
+
+  const addPhotoMeal = (created: api.ApiMeal) => {
+    setMeals((prev) => [...prev, { ...created, emoji: emojiFor(created.id), reply: 'Pela foto, estimei isso 🐿️📸' }]);
   };
 
   const saveNewGoal = async (newGoal: number) => {
@@ -150,7 +156,12 @@ export default function Hoje() {
         )}
 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ChatInput value={draft} onChangeText={setDraft} onSend={send} />
+          <ChatInput
+            value={draft}
+            onChangeText={setDraft}
+            onSend={send}
+            onCamera={() => setCapturingPhoto(true)}
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
 
@@ -166,6 +177,12 @@ export default function Hoje() {
         onClose={() => setEditingMeal(null)}
         onSave={saveMeal}
         onDelete={deleteMeal}
+      />
+
+      <PhotoCaptureModal
+        visible={capturingPhoto}
+        onClose={() => setCapturingPhoto(false)}
+        onLogged={addPhotoMeal}
       />
     </View>
   );

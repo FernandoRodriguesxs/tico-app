@@ -21,7 +21,7 @@ import { PhotoCaptureModal } from '@/components/photo-capture-modal';
 import { ProgressRing } from '@/components/progress-ring';
 import { StatusPill } from '@/components/status-pill';
 import * as api from '@/lib/api';
-import { emojiFor, pickReply, type UIMeal } from '@/lib/meal-display';
+import { emojiFor, isLowConfidence, pickReply, type UIMeal } from '@/lib/meal-display';
 import { COLORS } from '@/lib/theme';
 
 function notifyError() {
@@ -89,14 +89,20 @@ export default function Hoje() {
         setMeals((prev) => [...prev, makeNote(text)]);
         return;
       }
-      setMeals((prev) => [...prev, { ...created, emoji: emojiFor(created.id), reply: pickReply() }]);
+      const reply = isLowConfidence(created.confidence)
+        ? 'anotei! fiquei meio na dúvida — confere se faz sentido? 🐿️'
+        : pickReply();
+      setMeals((prev) => [...prev, { ...created, emoji: emojiFor(created.id), reply }]);
     } catch {
       notifyError();
     }
   };
 
   const addPhotoMeal = (created: api.ApiMeal) => {
-    setMeals((prev) => [...prev, { ...created, emoji: emojiFor(created.id), reply: 'Pela foto, estimei isso 🐿️📸' }]);
+    const reply = isLowConfidence(created.confidence)
+      ? 'pela foto eu estimei — mas confere se faz sentido? 🐿️'
+      : 'pela foto, estimei isso 🐿️📸';
+    setMeals((prev) => [...prev, { ...created, emoji: emojiFor(created.id), reply }]);
   };
 
   const saveNewGoal = async (newGoal: number) => {

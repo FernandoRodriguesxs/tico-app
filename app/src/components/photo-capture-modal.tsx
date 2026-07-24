@@ -3,8 +3,10 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, Text, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 import * as api from '@/lib/api';
+import { isLowConfidence } from '@/lib/meal-display';
 import { COLORS } from '@/lib/theme';
 
 type Props = {
@@ -19,9 +21,10 @@ const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ['images'],
   allowsEditing: true,
   aspect: [1, 1],
-  quality: 0.35,
-  base64: true,
+  quality: 1,
 };
+
+const MAX_WIDTH = 1024;
 
 export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
   const [stage, setStage] = useState<Stage>('aim');
@@ -39,11 +42,21 @@ export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
   };
 
   const analyze = async (asset: ImagePicker.ImagePickerAsset) => {
-    if (!asset.base64) return;
     setPhotoUri(asset.uri);
     setStage('analyzing');
     try {
-      const created = await api.createMealFromPhoto(asset.base64, 'image/jpeg');
+      const actions =
+        asset.width && asset.width > MAX_WIDTH ? [{ resize: { width: MAX_WIDTH } }] : [];
+      const compressed = await ImageManipulator.manipulateAsync(asset.uri, actions, {
+        compress: 0.5,
+        format: ImageManipulator.SaveFormat.JPEG,
+        base64: true,
+      });
+      if (!compressed.base64) {
+        setStage('error');
+        return;
+      }
+      const created = await api.createMealFromPhoto(compressed.base64, 'image/jpeg');
       setMeal(created);
       setStage('result');
     } catch {
@@ -73,6 +86,7 @@ export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
 
   const recognized = meal && api.isMeal(meal) ? meal : null;
   const notFood = stage === 'result' && meal !== null && !api.isMeal(meal);
+  const lowConfidence = recognized !== null && isLowConfidence(recognized.confidence);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -122,7 +136,11 @@ export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
                       {recognized ? recognized.food : 'não reconheci comida aqui'}
                     </Text>
                     <Text className="mt-[2px] font-nunito-semi text-[12px] text-muted">
-                      {notFood ? 'tenta outra foto 🐿️' : 'estimativa do Tico · dá pra ajustar depois'}
+                      {notFood
+                        ? 'tenta outra foto 🐿️'
+                        : lowConfidence
+                          ? 'fiquei na dúvida · confere se faz sentido?'
+                          : 'estimativa do Tico · dá pra ajustar depois'}
                     </Text>
                   </View>
                   {recognized ? (

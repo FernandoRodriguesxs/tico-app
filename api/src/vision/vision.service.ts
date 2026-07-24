@@ -21,6 +21,7 @@ type GeminiResponse = {
 
 const MODEL = 'gemini-flash-latest';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+const TIMEOUT_MS = 15000;
 
 const RESPONSE_SCHEMA = {
   type: 'object',
@@ -45,20 +46,7 @@ export class VisionService {
     const parts = this.buildParts(input);
     if (parts.length === 0) throw new ServiceUnavailableException('Nada para estimar');
 
-    const response = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: ESTIMATOR_SYSTEM_PROMPT }] },
-        contents: [{ parts }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json',
-          responseSchema: RESPONSE_SCHEMA,
-        },
-      }),
-    });
-
+    const response = await this.callGemini(apiKey, parts);
     if (!response.ok) throw new ServiceUnavailableException('Não consegui estimar agora');
 
     const data = (await response.json()) as GeminiResponse;
@@ -66,6 +54,34 @@ export class VisionService {
     if (!text) throw new ServiceUnavailableException('A IA não retornou uma estimativa');
 
     return this.parse(text);
+  }
+
+  private async callGemini(apiKey: string, parts: GeminiPart[]): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      return await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: ESTIMATOR_SYSTEM_PROMPT }] },
+          contents: [{ parts }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+            responseSchema: RESPONSE_SCHEMA,
+          },
+        }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      const aborted = error instanceof Error && error.name === 'AbortError';
+      throw new ServiceUnavailableException(
+        aborted ? 'A IA demorou demais para responder' : 'Não consegui falar com a IA agora',
+      );
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   private buildParts(input: EstimateInput): GeminiPart[] {

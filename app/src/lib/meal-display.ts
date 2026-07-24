@@ -1,6 +1,6 @@
 import type { ApiMeal } from './api';
 
-export type UIMeal = ApiMeal & { emoji: string; reply?: string };
+export type UIMeal = ApiMeal & { emoji: string; reply?: string; kind?: 'note' };
 
 const REPLIES = ['Anotei! 🥑', 'Boa! 🌰', 'Registrado! ✨', 'Tá anotado! 🐿️', 'Show, comi junto 🥗', 'Feito! 🍊'];
 const EMOJIS = ['🥗', '🍳', '🍛', '🥑', '🍎', '🌰', '🥪', '🍊', '🥐', '🍲'];

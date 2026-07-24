@@ -28,6 +28,21 @@ function notifyError() {
   Alert.alert('Ops', 'Não consegui falar com o servidor 🐿️\nVeja se ele está no ar e tente de novo.');
 }
 
+function makeNote(text: string): UIMeal {
+  return {
+    id: `note-${Date.now()}`,
+    text,
+    food: '',
+    kcal: 0,
+    confidence: null,
+    eatenAt: '',
+    createdAt: '',
+    emoji: '',
+    reply: 'oi! 🐿️ me conta o que você comeu que eu vou somando',
+    kind: 'note',
+  };
+}
+
 export default function Hoje() {
   const [goal, setGoal] = useState(2000);
   const [meals, setMeals] = useState<UIMeal[]>([]);
@@ -70,6 +85,10 @@ export default function Hoje() {
     Keyboard.dismiss();
     try {
       const created = await api.createMeal(text);
+      if (!api.isMeal(created)) {
+        setMeals((prev) => [...prev, makeNote(text)]);
+        return;
+      }
       setMeals((prev) => [...prev, { ...created, emoji: emojiFor(created.id), reply: pickReply() }]);
     } catch {
       notifyError();
@@ -149,7 +168,9 @@ export default function Hoje() {
               <View key={m.id} style={{ gap: 12 }}>
                 <ChatBubble from="user" text={m.text} />
                 {m.reply ? <ChatBubble from="bot" text={m.reply} /> : null}
-                <MealCard emoji={m.emoji} food={m.food} kcal={m.kcal} onPress={() => setEditingMeal(m)} />
+                {m.kind === 'note' ? null : (
+                  <MealCard emoji={m.emoji} food={m.food} kcal={m.kcal} onPress={() => setEditingMeal(m)} />
+                )}
               </View>
             ))}
           </ScrollView>

@@ -36,6 +36,12 @@ export type VerifyResult = {
   isNew: boolean;
 };
 
+export type NotRecognized = { recognized: false };
+
+export function isMeal(result: ApiMeal | NotRecognized): result is ApiMeal {
+  return 'id' in result;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getToken();
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -89,14 +95,14 @@ export function getDays(limit = 14) {
 }
 
 export function createMeal(text: string) {
-  return request<ApiMeal>('/meals', {
+  return request<ApiMeal | NotRecognized>('/meals', {
     method: 'POST',
     body: JSON.stringify({ text }),
   });
 }
 
 export function createMealFromPhoto(imageBase64: string, mimeType: string) {
-  return request<ApiMeal>('/meals/photo', {
+  return request<ApiMeal | NotRecognized>('/meals/photo', {
     method: 'POST',
     body: JSON.stringify({ imageBase64, mimeType }),
   });

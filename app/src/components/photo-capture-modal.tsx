@@ -26,7 +26,7 @@ const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
 export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
   const [stage, setStage] = useState<Stage>('aim');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [meal, setMeal] = useState<api.ApiMeal | null>(null);
+  const [meal, setMeal] = useState<api.ApiMeal | api.NotRecognized | null>(null);
 
   useEffect(() => {
     if (visible) reset();
@@ -67,11 +67,12 @@ export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
   };
 
   const confirm = () => {
-    if (meal) onLogged(meal);
+    if (meal && api.isMeal(meal)) onLogged(meal);
     onClose();
   };
 
-  const notFood = stage === 'result' && meal?.kcal === 0;
+  const recognized = meal && api.isMeal(meal) ? meal : null;
+  const notFood = stage === 'result' && meal !== null && !api.isMeal(meal);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -117,14 +118,16 @@ export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
                     <Text className="text-[24px]">{notFood ? '🤔' : '🍽️'}</Text>
                   </View>
                   <View className="flex-1">
-                    <Text className="font-nunito-x text-[15px] leading-[19px] text-ink">{meal.food}</Text>
+                    <Text className="font-nunito-x text-[15px] leading-[19px] text-ink">
+                      {recognized ? recognized.food : 'não reconheci comida aqui'}
+                    </Text>
                     <Text className="mt-[2px] font-nunito-semi text-[12px] text-muted">
                       {notFood ? 'tenta outra foto 🐿️' : 'estimativa do Tico · dá pra ajustar depois'}
                     </Text>
                   </View>
-                  {notFood ? null : (
-                    <Text className="font-baloo-x text-[22px] text-brand">{meal.kcal}</Text>
-                  )}
+                  {recognized ? (
+                    <Text className="font-baloo-x text-[22px] text-brand">{recognized.kcal}</Text>
+                  ) : null}
                 </View>
               ) : null}
             </View>
@@ -186,7 +189,7 @@ export function PhotoCaptureModal({ visible, onClose, onLogged }: Props) {
                   onPress={confirm}
                   className="h-[66px] flex-1 items-center justify-center rounded-[24px] bg-brand active:scale-[0.98]"
                 >
-                  <Text className="font-baloo text-[21px] text-white">Adicionar · {meal?.kcal} kcal</Text>
+                  <Text className="font-baloo text-[21px] text-white">Adicionar · {recognized?.kcal} kcal</Text>
                 </Pressable>
               )}
             </View>

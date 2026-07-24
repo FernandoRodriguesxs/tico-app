@@ -61,11 +61,12 @@ export class MealsService {
   async create(userId: string, dto: CreateMealDto) {
     const text = dto.text.trim();
     const estimate = await this.estimateText(text);
+    if (!estimate.food) return { recognized: false as const };
     return this.prisma.meal.create({
       data: {
         userId,
         text,
-        food: estimate.food || toFoodLabel(text),
+        food: estimate.food,
         kcal: estimate.kcal,
         confidence: estimate.confidence,
       },
@@ -74,11 +75,12 @@ export class MealsService {
 
   async createFromPhoto(userId: string, imageBase64: string, mimeType: string) {
     const estimate = await this.vision.estimate({ imageBase64, mimeType });
+    if (!estimate.food) return { recognized: false as const };
     return this.prisma.meal.create({
       data: {
         userId,
         text: 'Foto do prato',
-        food: estimate.food || 'Prato não identificado',
+        food: estimate.food,
         kcal: estimate.kcal,
         confidence: estimate.confidence,
       },
